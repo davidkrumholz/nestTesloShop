@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   IsArray,
   IsIn,
@@ -6,12 +7,12 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  minLength,
+  MinLength,
 } from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
-  @minLength(1)
+  @MinLength(1)
   title: string;
   @IsNumber()
   @IsPositive()
