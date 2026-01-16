@@ -5,13 +5,16 @@ import { User } from './entities/user.entity';
 
 import * as bcrypt from 'bcrypt';
 import { LoginUserDto, CreateUserDto } from './dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
     ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -29,7 +32,7 @@ export class AuthService {
   async login(loginUserDto: LoginUserDto) {
     const {email, password} = loginUserDto;
 
-      const userExist = await this.userRepository.findOne({where: {email}, select: {email: true, password: true}});
+      const userExist = await this.userRepository.findOne({where: {email}, select: {email: true, id: true, password: true}});
       
       if(!userExist) {
         throw new UnauthorizedException('Credenciales no válidas, intente de nuevo - email');
@@ -39,7 +42,12 @@ export class AuthService {
         throw new UnauthorizedException('Credenciales no válidas, intente de nuevo - password');
       }
 
-      return userExist;
+      return {...userExist, token: this.getJwtToken({id: userExist.id})};
+  }
+
+  private getJwtToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    return token;
   }
 
   private handleDBError(error: any): never {
