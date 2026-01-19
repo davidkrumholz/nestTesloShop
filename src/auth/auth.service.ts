@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 
 import * as bcrypt from 'bcrypt';
-import { LoginUserDto, CreateUserDto } from './dto';
+import { LoginUserDto, CreateUserDto, UserResponseDto } from './dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
 
@@ -29,7 +29,7 @@ export class AuthService {
     }
   }
 
-  async login(loginUserDto: LoginUserDto) {
+  async login(loginUserDto: LoginUserDto): Promise<UserResponseDto> {
     const {email, password} = loginUserDto;
 
       const userExist = await this.userRepository.findOne({where: {email}, select: {email: true, id: true, password: true}});
@@ -42,7 +42,25 @@ export class AuthService {
         throw new UnauthorizedException('Credenciales no válidas, intente de nuevo - password');
       }
 
-      return {...userExist, token: this.getJwtToken({id: userExist.id})};
+      const token = this.getJwtToken({id: userExist.id});
+
+      const userResponse: UserResponseDto = {
+        id: userExist.id,
+        email: userExist.email,
+        token,
+      };
+
+      return userResponse;
+  }
+
+  async checkAuthStatus(user: User): Promise<UserResponseDto> {
+    const token = this.getJwtToken({id: user.id});
+
+    return {
+      id: user.id,
+      email: user.email,
+      token,
+    };
   }
 
   private getJwtToken(payload: JwtPayload) {
