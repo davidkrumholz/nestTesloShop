@@ -5,13 +5,22 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { UpdateProductImageDto } from './dto/update-product-image.dto';
 
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ValidRoles } from '../auth/interfaces';
+import { GetUser } from '../auth/decorators';
+import { User } from '../auth/entities/user.entity';
+
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  @Auth(ValidRoles.admin)
+  create(
+    @Body() createProductDto: CreateProductDto,
+    @GetUser() user: User
+    ) {
+    return this.productsService.create(createProductDto, user);
   }
 
   @Get()
@@ -26,8 +35,8 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateProductDto & UpdateProductImageDto) {
-    return this.productsService.update(id, dto);
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateProductDto & UpdateProductImageDto, user: User) {
+    return this.productsService.update(id, dto, user);
   }
 
   @Delete(':id')
